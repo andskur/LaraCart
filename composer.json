@@ -1,12 +1,10 @@
 {
     "name": "andskur/laracart",
     "description": "Simple Shoping Cart for Laravel framework",
-    "keywords": ["laravel", "e-comerce", "shoping cart"] ,
-    // "homepage": "https://github.com/andskur/CoinMc-laravel",
     "license": "MIT",
     "authors": [
         {
-            "name": "Andrey Skurlatov",
+            "name": "An rumboutique",
             "email": "a.skurlatov@gmail.com"
         }
     ],
@@ -16,9 +14,11 @@
         "guzzlehttp/guzzle": "^6.2"
     },
     "autoload": {
+        "classmap": [
+            "database"
+        ],
         "psr-4": {
             "Andskur\\LaraCart\\": "src/"
         }
-    },
-    "minimum-stability": "dev"
+    }
 }
