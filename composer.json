@@ -1,10 +1,11 @@
 {
     "name": "andskur/laracart",
     "description": "Simple Shoping Cart for Laravel framework",
+    "homepage": "https://github.com/andskur/LaraCart",
     "license": "MIT",
     "authors": [
         {
-            "name": "An rumboutique",
+            "name": "Andrey Skurlatov",
             "email": "a.skurlatov@gmail.com"
         }
     ],
@@ -14,11 +15,9 @@
         "guzzlehttp/guzzle": "^6.2"
     },
     "autoload": {
-        "classmap": [
-            "database"
-        ],
         "psr-4": {
             "Andskur\\LaraCart\\": "src/"
         }
-    }
+    },
+    "minimum-stability": "dev"
 }
