@@ -25,27 +25,7 @@ class LaraCart
 	{
 		$cart = $this->cart()->mapWithKeys(function ($row, $key) {
 			$item = new Item($row);
-			$item = $item->map(function ($item, $key) {
-				if ($key == 'subitems') {
-					$subItems = collect($item);
-					$price = $subItems->pull('price_all');
-					$formated = $subItems->values()->keyBy('name');
-					$formated->put('price_all', $price);
-					return $formated;
-				}
-				if ($key == 'discount') {
-					$discount = collect($item);
-					$discount->transform(function ($item, $key) {
-						if ($key == 'start'|| $key == 'end') {
-							$time = $this->time->createFromTimestamp($item);
-							return $time->toDateString();
-						}
-						return $key;
-					});
-					return $item;
-				}
-				return $item;
-			});
+			$item = $this->formatItem($item);
 			return [substr($key, 9, 1) => $item];
 		});
 		$cart_prices = [
@@ -83,7 +63,39 @@ class LaraCart
 	{
 		$row = $this->item($id)->values()[0];
 		$item = new Item($row);
-		return $item->storage();
+		$item = $this->formatItem($item);
+		return $item;
+	}
+
+	/**
+	 * Fromat item array
+	 * @param  array 	$item 	item array
+	 * @return array
+	 */
+	protected function formatItem ($item)
+	{
+		$formated = $item->map(function ($item, $key) {
+			if ($key == 'subitems') {
+				$subItems = collect($item);
+				$price = $subItems->pull('price_all');
+				$formated = $subItems->values()->keyBy('name');
+				$formated->put('price_all', $price);
+				return $formated;
+			}
+			if ($key == 'discount') {
+				$discount = collect($item);
+				$discount->transform(function ($item, $key) {
+					if ($key == 'start'|| $key == 'end') {
+						$time = $this->time->createFromTimestamp($item);
+						return $time->toDateString();
+					}
+					return $item;
+				});
+				return $discount;
+			}
+			return $item;
+		});
+		return $formated;
 	}
 
 	/**
