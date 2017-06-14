@@ -18,12 +18,36 @@ class LaraCart
 	}
 
 	/**
-	 * get full cart with total prices
+	 * get formated full cart with total prices
 	 * @return array
 	 */
 	public function getAll ()
 	{
-		$cart = $this->cart();
+		$cart = $this->cart()->mapWithKeys(function ($row, $key) {
+			$item = new Item($row);
+			$item = $item->map(function ($item, $key) {
+				if ($key == 'subitems') {
+					$subItems = collect($item);
+					$price = $subItems->pull('price_all');
+					$formated = $subItems->values()->keyBy('name');
+					$formated->put('price_all', $price);
+					return $formated;
+				}
+				if ($key == 'discount') {
+					$discount = collect($item);
+					$discount->transform(function ($item, $key) {
+						if ($key == 'start'|| $key == 'end') {
+							$time = $this->time->createFromTimestamp($item);
+							return $time->toDateString();
+						}
+						return $key;
+					});
+					return $item;
+				}
+				return $item;
+			});
+			return [substr($key, 9, 1) => $item];
+		});
 		$cart_prices = [
 			"price"			=> $this->cartPrice(),
 			"priceDiscount" => $this->cartPriceDiscount()
@@ -44,6 +68,8 @@ class LaraCart
 			$item->put('subitems', $this->getSubs($item));
 			$item->put('prices', $this->itemPrices($item));
 			return $item->storage();
+		})->sortBy(function ($item, $key) {
+			return $key;
 		});
 		return $cart;
 	}
@@ -178,9 +204,13 @@ class LaraCart
 				$item->forget($key);
 			}
 		});
-		$subItems_prices =  $subItems->sum('fullPrice');
-		$subItems->put('price_all', $subItems_prices);
-		return $subItems;
+		if ($subItems->count() > 0) {
+			$subItems_prices =  $subItems->sum('fullPrice');
+			$subItems->put('price_all', $subItems_prices);
+		}
+		return $subItems->sortBy(function ($item, $key) {
+			return $key;
+		});
 	}
 
 	/**
