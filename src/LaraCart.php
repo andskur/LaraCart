@@ -269,17 +269,26 @@ class LaraCart
 	}
 
 	/**
+	 * Calcelate total price
+	 * @return float
+	 */
+	protected function totalPrice ($key)
+	{
+		$cart = $this->cart();
+		$price = $cart->sum(function ($item) use ($key) {
+			$rowPrice = $item['prices'][$key];
+		    return $rowPrice;
+		});
+		return $price;
+	}
+
+	/**
 	 * Full cart total price
 	 * @return float
 	 */
 	public function cartPrice ()
 	{
-		$cart = $this->cart();
-		$price = $cart->sum(function ($item) {
-			$rowPrice = $item['prices']['total'];
-		    return $rowPrice;
-		});
-		return $price;
+		return $this->totalPrice('total');
 	}
 
 	/**
@@ -288,11 +297,6 @@ class LaraCart
 	 */
 	public function cartPriceDiscount ()
 	{
-		$cart = $this->cart();
-		$price = $cart->sum(function ($product) {
-			$rowDiscPrice = $product['prices']['total_discount'];
-		    return $rowDiscPrice;
-		});
-		return $price;
+		return $this->totalPrice('total_discount');
 	}
 }
