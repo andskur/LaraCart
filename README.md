@@ -70,10 +70,11 @@ Check item.
 
 LaraCart::checkItem($id);
 ...
+```
 
-### Check item in cart
+### Get all cart
 
-Get all cart.
+All cart.
 
 **example:**
 
