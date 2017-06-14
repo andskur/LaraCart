@@ -4,9 +4,11 @@ namespace Andskur\LaraCart\Collections;
 
 use Illuminate\Support\Collection;
 
+/**
+ * SubItem collection class
+ */
 class CartSubItem extends Collection
 {
-	public $fullPrice;
 	function __construct($item)
 	{
 		parent::__construct($item);

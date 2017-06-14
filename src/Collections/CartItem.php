@@ -4,6 +4,9 @@ namespace Andskur\LaraCart\Collections;
 
 use Illuminate\Support\Collection;
 
+/**
+ * Item collection class
+ */
 class CartItem extends Collection
 {
 	function __construct($item)
@@ -13,6 +16,10 @@ class CartItem extends Collection
 		$this->put('fullPrice', $fullPrice);
 	}
 
+	/**
+	 * Format collection to/from storage
+	 * @return array
+	 */
 	public function storage ()
 	{
 		$row = $this;
@@ -26,6 +33,11 @@ class CartItem extends Collection
 		return $row->toArray();
 	}
 
+	/**
+	 * encode/decode discount object
+	 * @param  json 	$discount 	discount object
+	 * @return json
+	 */
 	protected function discount ($discount)
 	{
 		switch (gettype($discount)) {

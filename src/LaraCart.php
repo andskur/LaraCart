@@ -17,20 +17,42 @@ class LaraCart
 		$this->time = $carbon;
 	}
 
+	/**
+	 * get full cart with total prices
+	 * @return array
+	 */
 	public function getAll ()
+	{
+		$cart = $this->cart();
+		$cart_prices = [
+			"price"			=> $this->cartPrice(),
+			"priceDiscount" => $this->cartPriceDiscount()
+		];
+		$cart->put('cartPrices', $cart_prices);
+		return $cart;
+	}
+
+	/**
+	 * Compare cart
+	 * @return array
+	 */
+	protected function cart ()
 	{
 		$rows = collect($this->storage->all());
 		$cart = $rows->map(function ($row) {
 			$item = new Item($row);
-			$subItems = $this->getSubs($item);
-			$item->put('subitems', $subItems);
-			$prices = $this->itemPrices($item);
-			$item->put('prices', $prices);
+			$item->put('subitems', $this->getSubs($item));
+			$item->put('prices', $this->itemPrices($item));
 			return $item->storage();
 		});
 		return $cart;
 	}
 
+	/**
+	 * Get formated item
+	 * @param  int 	$id 	item id
+	 * @return array
+	 */
 	public function getItem ($id)
 	{
 		$row = $this->item($id)->values()[0];
@@ -38,13 +60,28 @@ class LaraCart
 		return $item->storage();
 	}
 
-	private function item ($id)
+	/**
+	 * Get item from cart
+	 * @param  int 	$id 	item id
+	 * @return array
+	 */
+	protected function item ($id)
 	{
-		$cart = $this->getAll();
+		$cart = $this->cart();
 		$item = $cart->where('id', $id);
 		return $item;
 	}
 
+	/**
+	 * Store item to cart
+	 * @param  int     	$id       	item id
+	 * @param  int     	$qnt      	item quanity
+	 * @param  string  	$name     	item name
+	 * @param  float    $price    	item price
+	 * @param  array    $discount 	discount array
+	 * @param  array 	$subitems 	sub items array
+	 * @return array               	stored item
+	 */
 	public function storeItem ($id, $qnt, $name, $price, $discount = false, array $subitems = null)
 	{
 		$fields = [
@@ -74,6 +111,15 @@ class LaraCart
 		return $item;
 	}
 
+	/**
+	 * Add sub item to cart row
+	 * @param  int     	$id       	item id
+	 * @param  int     	$qnt      	item quanity
+	 * @param  string  	$name     	item name
+	 * @param  float    $price    	item price
+	 * @param  string 	$belongTo 	cart row
+	 * @return array               	stored sub item
+	 */
 	public function addSubItem ($id, $qnt, $name, $price, $belongTo)
 	{
 		$fields = [
@@ -84,27 +130,43 @@ class LaraCart
 			"belongTo" 	=> $belongTo
 		];
 		$subItem = new SubItem ($fields);
-		$row = collect($this->getAll()->get('cart:row:' . $belongTo));
+		$row = collect($this->cart()->get('cart:row:' . $belongTo));
 		if (collect($row['subitems'])->contains('id', $id)) {
 			$key = collect($row->get('subitems'))->where('id', $id)->keys()[0];
 			$this->storage->incr($key, $qnt);
 		} else {
 			$this->storage->addSubItem($subItem);
 		}
+		return $subitem;
 	}
 
+	/**
+	 * Delete item from cart
+	 * @param  int 	$id 	item id
+	 * @return boolean
+	 */
 	public function delItem ($id)
 	{
 		$item = $this->item($id);
-		return $this->storage->delete($item);
+		return $this->storage->delete($item->keys()[0]);
 	}
 
-	public function checkItem ($item)
+	/**
+	 * Check item in cart
+	 * @param  int 	$id 	item id
+	 * @return boolean
+	 */
+	public function checkItem ($id)
 	{
-		$cart = $this->getAll();
+		$cart = $this->cart();
 		return $cart->contains('id', $item);
 	}
 
+	/**
+	 * Get sub items from cart row
+	 * @param  object 	$item 	CartItem object
+	 * @return array
+	 */
 	protected function getSubs ($item)
 	{
 		$subItems = collect([]);
@@ -121,6 +183,11 @@ class LaraCart
 		return $subItems;
 	}
 
+	/**
+	 * Get cart row total prices
+	 * @param  object 	$item 	CartItem object
+	 * @return array
+	 */
 	protected function itemPrices ($item)
 	{
 		$total = $item->get('fullPrice') + $item->get('subitems')->get('price_all');
@@ -140,10 +207,14 @@ class LaraCart
 			"total" 			=> $total,
 			"total_discount" 	=> $total_discount
 		];
-
 		return $prices;
 	}
 
+	/**
+	 * Check discount period
+	 * @param  array 	$discount 	discount array
+	 * @return boolean
+	 */
 	protected function checkDiscount ($discount)
 	{
 		$start = $discount->start;
@@ -155,9 +226,13 @@ class LaraCart
 		return false;
 	}
 
+	/**
+	 * Full cart total price
+	 * @return float
+	 */
 	public function cartPrice ()
 	{
-		$cart = $this->getAll();
+		$cart = $this->cart();
 		$price = $cart->sum(function ($item) {
 			$rowPrice = $item['prices']['total'];
 		    return $rowPrice;
@@ -165,9 +240,13 @@ class LaraCart
 		return $price;
 	}
 
+	/**
+	 * Full cart total discount price
+	 * @return float	 
+	 */
 	public function cartPriceDiscount ()
 	{
-		$cart = $this->getAll();
+		$cart = $this->cart();
 		$price = $cart->sum(function ($product) {
 			$rowDiscPrice = $product['prices']['total_discount'];
 		    return $rowDiscPrice;
